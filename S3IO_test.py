@@ -24,7 +24,7 @@ class TestGoodConnect(unittest.TestCase):
     def tearDown(self):
 #        try:
 #            force_delete_bucket(self.conn, TEST_BUCKET_NAME)
-#        except ResponseError:
+#        except S3ResponseError:
 #            pass      
          force_delete_bucket(self.conn, TEST_BUCKET_NAME)
 
@@ -147,7 +147,7 @@ class TestGoodWrite( unittest.TestCase ):
     def tearDown(self):
         try:
             force_delete_bucket(self.conn, TEST_BUCKET_NAME)
-        except ResponseError:
+        except S3ResponseError:
             pass
         
 class TestBadWrite( unittest.TestCase ):
@@ -156,11 +156,11 @@ class TestBadWrite( unittest.TestCase ):
     
     def testForbiddenBucket(self):
         """ Can't access buckets that don't belong to you """
-        self.assertRaises(ResponseError, S3IO, self.conn, 'new_bucket', 'test_object')
+        self.assertRaises(S3ResponseError, S3IO, self.conn, 'new_bucket', 'test_object')
         
     def testBucketNameTooLong(self):
         """ Bucket names cannot be longer than 255 chars """
-        self.assertRaises(ResponseError, S3IO, self.conn, 'a'*256, 'test_object')
+        self.assertRaises(S3ResponseError, S3IO, self.conn, 'a'*256, 'test_object')
                     
     def testZeroByte(self):
         """ Input length must be greater than zero """
@@ -184,16 +184,16 @@ class TestBadWrite( unittest.TestCase ):
         for char in """`~!@#$%^&*()+={}[];':"<>,|\ """:
             test_invalid_bucket_name = TEST_BUCKET_NAME+'_%s' % char
             #print test_invalid_bucket_name
-            self.assertRaises(ResponseError, S3IO, self.conn, test_invalid_bucket_name, 'test_object')
+            self.assertRaises(S3ResponseError, S3IO, self.conn, test_invalid_bucket_name, 'test_object')
             
     def testBucketNameTooShort(self):
         """ Bucket names must be at least 3 characters long """
-        self.assertRaises(ResponseError, S3IO, self.conn, 'wz', 'test_object')
+        self.assertRaises(S3ResponseError, S3IO, self.conn, 'wz', 'test_object')
      
     def tearDown(self):
         try:
             force_delete_bucket(self.conn, TEST_BUCKET_NAME)
-        except ResponseError:
+        except S3ResponseError:
             pass
 
 

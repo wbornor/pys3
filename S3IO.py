@@ -27,7 +27,7 @@ class S3IO(StringIO):
             response = self.conn.create_bucket(bucket_name)
             check_http_response(response, 200)
         elif response.http_response.status != 200:
-            raise ResponseError, response
+            raise S3ResponseError, response
         
     def _get_object(self):
         """ Retrieve the entire object from S3 and write it to the internal buffer. 
@@ -92,7 +92,7 @@ class S3IO(StringIO):
                                  self.meta)
             
         if response.http_response.status != 200:
-            raise ResponseError, response            
+            raise S3ResponseError, response            
         
         self.sent_len = self.len
         self.dirty = False

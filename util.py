@@ -4,7 +4,7 @@ from lib import S3
 
 class S3Error(exceptions.Exception): pass
 
-class ResponseError(S3Error):
+class S3ResponseError(S3Error):
     def __init__(self, response):
         self.response = response
         self.status = response.http_response.status
@@ -15,14 +15,14 @@ class ResponseError(S3Error):
         return "%s - %s\n%s\n" % (self.status, self.reason, self.body)
 
 def check_http_response(response, http_code=None):
-    """ Check the HTTP Reponse for any errors, raise a ResponseError if found.
+    """ Check the HTTP Reponse for any errors, raise a S3ResponseError if found.
         optionally give a specific http_code to look for """
     
     if http_code and response.http_response.status != http_code:
-        raise ResponseError, response
+        raise S3ResponseError, response
     
     if response.http_response.status > 300:
-        raise ResponseError, response
+        raise S3ResponseError, response
 
 def force_delete_bucket(conn, bucket_name):
     r = conn.list_bucket(bucket_name)
