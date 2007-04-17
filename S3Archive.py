@@ -39,31 +39,51 @@ class S3ArchiveIO(S3IO):
             S3IO.close(self)
         
 class S3Archive:
-    """ a S3Archive is a set of physical Amazon objects that represent historical instances of the same logical object.
-        rkiv = S3Archiver(self.conn, TEST_BUCKET_NAME, 'test_object')
-        io = rkiv.new_io()
-        io = rkiv.new_io(logical_date=ld)
-        rkiv.scratch()
-        rkiv.list()
-
-        io = rkiv.existing_io()
-        io = rkiv.pop() #same as rkiv.get_existing_instance() 
-        io = rkiv.get_instance(fqon=rkiv.list()[0])
-        io = rkiv.get_existing_instance(fqon=fqon)
-        
-        """
+    """ a S3Archive is a set of physical Amazon objects that represent historical instances of the same logical object """   
         
     def __init__(self, conn, bucket_name, object_prefix):
         self.conn = conn
         self.bucket_name = bucket_name
         self.object_prefix = object_prefix
+        self.props = None
+        
+        try:
+            self.props = self._get_props()
+            self.days = self.props['days'] #if days is <= 0 then keep indefinatly
+            self.copies = self.props['copies'] #if copies is <= 0 then keep indefinatly 
+            
+        except S3IOError:
+            #props file not set
+            self.set_retention()
+    
+    def __str__(self):
+        return '<S3Archive - %s.%s>' % (self.bucket_name, self.object_prefix)
+    
+    def __repr__(self):
+        return __str__()
+    
+    def _get_props(self):
+        io = S3IO(self.conn, self.bucket_name, self.object_prefix+'.props')
+        props = pickle.load(io.read())
+        logging.debug('contents of %s: %s' % (self.props_object_name, props))
+        return props
+
+    def set_retention(self, days=400, copies=10):
+        self.props = {'days':days, 'copies':copies}
+        self.days = days
+        self.copies = copies
+        io = S3IO(self.conn, self.bucket_name, self.object_prefix+'.props')
+        pickle.dump(self.props, io)
+        io.close()
     
     def new_io(self, logical_date=None):
-        
+        """ get a new instance of this logical object """
         return S3ArchiveIO(self, logical_date=logical_date)
     
 
     def existing_io(self, fqon=None, logical_date=None, physical_date=None):
+        """ find an existing instance of this logical object
+            if no parameters are given, get the most recent addition to the archive """
         
         if fqon:
             return(S3ArchiveIO(self, fqon=fqon))
@@ -109,7 +129,8 @@ class S3Archive:
             return S3ArchiveIO(self, fqon=self.list()[-1])
         
     def list(self, options=None):
-        """ list all the instances of this object filtered by prefix"""
+        """ list all the instances of this logical object
+            options is a list that is sent in the request to the webservice"""
         if not options:
             options = {'prefix': self.object_prefix}
         
@@ -128,31 +149,18 @@ class S3Archive:
         return fqons
         
     def scratch(self):
-        pass
+        """ frees stale objects from this archive """
+        fqons = self.list()
+        if self.copies > 0 and len(fqons) > self.copies:
+            for fqon in fqons[:len(fqons)-self.copies]:
+                #delete object
+                pass
     
     def close(self):
         self.scratch()
         
     
-class S3Scratcher:
-    """S3Scratcher - Frees stale objects from a bucket """
-    def __init__(self, conn, bucket_name, object_name=None, days=365*2, copies=10, compress=False):
-        self.conn
-        self.bucket_name = bucket_name
-        self.object_prefix = object_name
-        self.days = days
-        self.copies = copies
-        self.compress = compress
-    
-    def scratch(self):
-        try:
-            io = S3IO(self.conn, self.bucket_name, 's3scratcher.props')
-            props = pickle.load(io.read())
-            logging.debug('contents of s3scratcher.props: %s' % props)
-        except S3IOError:
-            pass #TODO - rebuild the props file from meta data if it has been deleted or corrupted
-#        finally:
-#            io.close()
+
         
         
         
