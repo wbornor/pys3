@@ -1,6 +1,8 @@
 from StringIO import StringIO
+import logging
 from lib import S3
 from util import *
+
 
 class S3IOError(S3Error): pass
 
@@ -12,6 +14,7 @@ class S3IO(StringIO):
         self.conn = conn
         self.bucket_name = bucket_name
         self.object_name = object_name
+        self.key = '%s/%s' % (self.bucket_name, self.object_name)
         self.meta = meta
         self.sent_len = 0 #num bytes that have been sent to Amazon
         self.get_complete = False #tells if the get of the object has been completed
@@ -28,6 +31,9 @@ class S3IO(StringIO):
             check_http_response(response, 200)
         elif response.http_response.status != 200:
             raise S3ResponseError, response
+    
+    def __str__(self):
+        return self.key
         
     def _get_object(self):
         """ Retrieve the entire object from S3 and write it to the internal buffer. 
@@ -35,6 +41,7 @@ class S3IO(StringIO):
             it won't retrieve the object. """
             
         if not self.dirty and not self.get_complete:
+            logging.info('reading %s.%s' % (self.bucket_name, self.object_name))
             r = self.conn.get(self.bucket_name, self.object_name)
             self.get_complete = True
             
@@ -42,7 +49,9 @@ class S3IO(StringIO):
                 return  #the object doesn't exist so just return
             
             check_http_response(r)
+            logging.debug('read successful')
             self.write(r.object.data)
+            #TODO - set meta data
             self.seek(0)
             self.dirty = False
         
@@ -85,6 +94,8 @@ class S3IO(StringIO):
         
         obj = self.getvalue()
         
+        logging.info('flushing %s.%s meta: %s' % (self.bucket_name, self.object_name, self.meta))
+        
         #write the full buffer    
         response = self.conn.put(self.bucket_name,
                                  self.object_name,
@@ -94,10 +105,15 @@ class S3IO(StringIO):
         if response.http_response.status != 200:
             raise S3ResponseError, response            
         
+        logging.debug('flush successful')
         self.sent_len = self.len
         self.dirty = False
             
     def close(self):
-        self.flush()
-        StringIO.close(self)  
+        if not self.closed:
+            self.flush()
+            StringIO.close(self)  
                 
+    def __del__(self):
+        if not self.closed:
+            self.close()

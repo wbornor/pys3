@@ -19,7 +19,7 @@ class TestForceDeleteBucket(unittest.TestCase):
         
     def testForbiddenBucket(self):
         """ can't delete a bucket that doesn't belong to you """
-        self.assertRaises(S3ResponseError, force_delete_bucket, self.conn, 'new_bucket')
+        self.assertRaises(ResponseError, force_delete_bucket, self.conn, 'new_bucket')
         
     def testValidForceDelete(self):
         """ should be able to force delete a bucket """

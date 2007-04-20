@@ -36,10 +36,7 @@ def force_delete_bucket(conn, bucket_name):
     check_http_response(r)
     
     return r
-    
-
-        
-    
+     
         
     
     

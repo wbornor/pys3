@@ -2,6 +2,8 @@ import os
 import unittest
 from util import *
 from S3IO import *
+import logging
+logging.root.setLevel(logging.DEBUG)
 
 #In a file called amazon_credentials.py you must supply 
 #values for two variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
