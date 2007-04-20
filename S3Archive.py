@@ -163,7 +163,7 @@ class S3Archive:
                 -their logical age must be older than self.days 
                 -they contribute to a total instance count that is greater than self.copies """
         
-        logging.INFO("starting scratch() days:%s, copies:%s" % (self.days, self.copies))
+        logging.info("starting scratch() days:%s, copies:%s" % (self.days, self.copies))
         
         if not self.props:
             try:
