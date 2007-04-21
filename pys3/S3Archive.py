@@ -10,7 +10,8 @@ import util
 
 __all__ = [
        "S3ArchiveError",
-       "S3ArchiveIO", "s3archiveio"
+       "S3ArchiveIO", "s3archiveio",
+       "S3Archive", "s3archive"
 ]
 
 class S3ArchiveError(S3IOError): pass
@@ -43,6 +44,8 @@ class S3ArchiveIO(S3IO):
     def close(self):
         if not self.closed:
             S3IO.close(self)
+            
+s3archiveio = S3ArchiveIO
         
 class S3Archive:
     """ a S3Archive is a set of physical Amazon objects that represent historical instances of the same logical object """   
@@ -203,8 +206,8 @@ class S3Archive:
     def __del__(self):
         self.scratch()
         
-s3archiveio = S3ArchiveIO
 
+s3archive = S3Archive
         
         
         
