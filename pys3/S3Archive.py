@@ -8,6 +8,11 @@ from lib import S3
 from S3IO import *
 import util
 
+__all__ = [
+       "S3ArchiveError",
+       "S3ArchiveIO", "s3archiveio"
+]
+
 class S3ArchiveError(S3IOError): pass
 
 class S3ArchiveIO(S3IO):
@@ -198,7 +203,7 @@ class S3Archive:
     def __del__(self):
         self.scratch()
         
-    
+s3archiveio = S3ArchiveIO
 
         
         

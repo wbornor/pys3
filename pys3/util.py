@@ -2,6 +2,13 @@ from StringIO import StringIO
 import exceptions
 from lib import S3
 
+__all__ = [
+       "S3Error",
+       "S3ResponseError", 
+       "check_http_response",
+       "force_delete_bucket"
+]
+
 class S3Error(exceptions.Exception): pass
 
 class S3ResponseError(S3Error):

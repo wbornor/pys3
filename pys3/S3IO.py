@@ -3,10 +3,15 @@ import logging
 from lib import S3
 from util import *
 
+__all__ = [
+       "S3IOError",
+       "S3IO", "s3io"
+]
 
 class S3IOError(S3Error): pass
 
 class S3IO(StringIO):
+    
     def __init__(self, conn, bucket_name, object_name, meta={}, buf=''):
         StringIO.__init__(self, buf)
         
@@ -18,6 +23,7 @@ class S3IO(StringIO):
         self.meta = meta
         self.sent_len = 0 #num bytes that have been sent to Amazon
         self.get_complete = False #tells if the get of the object has been completed
+        self.closed = False
         
         if buf:
             self.dirty = True
@@ -115,5 +121,6 @@ class S3IO(StringIO):
             StringIO.close(self)  
                 
     def __del__(self):
-        if not self.closed:
-            self.close()
+        self.close()
+        
+s3io = S3IO
