@@ -5,6 +5,7 @@ import time
 from datetime import *
 import logging
 import util
+from lib import S3
 from S3IO import *
 from S3Archive import *
 logging.root.setLevel(logging.DEBUG)
@@ -168,6 +169,15 @@ class TestGoodList(unittest.TestCase):
     def setUp(self):
         self.conn = S3.AWSAuthConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)  
         
+    def testNoList(self):
+        """ should return an empty list on an empty bucket """
+        try: util.force_delete_bucket(self.conn, TEST_BUCKET_NAME)
+        except S3ResponseError: pass
+        
+        rkiv = S3Archive(self.conn, TEST_BUCKET_NAME, 'test_object')
+        self.assertEqual(len(rkiv.list()), 0)
+        
+        
     def testShortList(self):
         """ should return all instances of an archived object  """
         
@@ -203,7 +213,29 @@ class TestGoodList(unittest.TestCase):
             
         rkiv = S3Archive(self.conn, TEST_BUCKET_NAME, 'test_object')
         self.assertEqual(len(rkiv.list(options={'max-keys':2, 'prefix':'test_object'})), 3)
+    
+    def testObjectConflict(self):
+        """ functions on an archived object shouldn't conflict with a non archived object """
+        try: util.force_delete_bucket(self.conn, TEST_BUCKET_NAME)
+        except S3ResponseError: pass
         
+        io = S3IO(self.conn, TEST_BUCKET_NAME, 'test_object')
+        io.write('dont touch me')
+        io.close()
+        
+        rkiv = S3Archive(self.conn, TEST_BUCKET_NAME, 'test_obj')
+        self.assertEqual(len(rkiv.list()), 0)
+        
+        io = rkiv.new_io()
+        io.write('only in the archive')
+        io.close()
+        
+        self.assertEqual(len(rkiv.list()), 1)
+        
+        io = S3IO(self.conn, TEST_BUCKET_NAME, 'test_object')
+        self.assertEqual(io.read, 'dont touch me')
+        
+            
     def tearDown(self):
         try: util.force_delete_bucket(self.conn, TEST_BUCKET_NAME)
         except S3ResponseError: pass   

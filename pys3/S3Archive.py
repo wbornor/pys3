@@ -145,7 +145,7 @@ class S3Archive:
             options is a list that is sent in the request to the webservice"""
             
         if not options:
-            options = {'prefix': self.object_prefix}
+            options = {'prefix': self.object_prefix+'.'}
         
         is_truncated = True #on the first time, assume the response is truncated
         fqons = []
@@ -153,6 +153,10 @@ class S3Archive:
         while is_truncated:
             logging.debug('listing the contents of \'%s\' with options \'%s\'' % (self.bucket_name, options))
             r = self.conn.list_bucket(self.bucket_name, options=options)
+            if r.http_response.status == 404:
+                # bucket doesn't exist, return empty list
+                return []
+            
             util.check_http_response(r)
             fqons.extend([list_entry.key for list_entry in r.entries])
             is_truncated = r.is_truncated
