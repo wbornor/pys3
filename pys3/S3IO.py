@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import logging
 from lib import S3
+from S3Errors import *
 from util import *
 
 __all__ = [

@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 import logging
 from lib import S3
+from S3Errors import *
 from S3IO import *
 import util
 
@@ -14,7 +15,7 @@ __all__ = [
        "S3Archive", "s3archive"
 ]
 
-class S3ArchiveError(S3IOError): pass
+class S3ArchiveError(S3Error): pass
 
 class S3ArchiveIO(S3IO):
     def __init__(self, rkiv, meta={}, buf='', fqon=None, logical_date=None):
@@ -51,6 +52,10 @@ class S3Archive:
     """ a S3Archive is a set of physical Amazon objects that represent historical instances of the same logical object """   
         
     def __init__(self, conn, bucket_name, object_prefix):
+
+        if object_prefix.count('.'):
+            raise S3ArchiveError("object_prefix cannot contain any periods.")
+        
         self.conn = conn
         self.bucket_name = bucket_name
         self.object_prefix = object_prefix
@@ -163,7 +168,7 @@ class S3Archive:
             if is_truncated:
                 options['marker'] = r.entries[-1].key 
         
-        if fqons[-1] == self.object_prefix + '.props':
+        if fqons and fqons[-1] == self.object_prefix + '.props':
             fqons.pop()
             
         logging.debug(fqons)
@@ -175,8 +180,6 @@ class S3Archive:
                 -their logical age must be older than self.days 
                 -they contribute to a total instance count that is greater than self.copies """
         
-        logging.info("starting scratch() days:%s, copies:%s" % (self.days, self.copies))
-        
         if not self.props:
             try:
                 self.props = self._get_props()
@@ -186,9 +189,11 @@ class S3Archive:
             except EOFError:
                 #props file not set
                 self.set_retention()
+        
+        logging.info("starting scratch() days:%s, copies:%s" % (self.days, self.copies))
                     
         fqons = self.list()
-        logging.debug('list length: %d' % (len(fqons)))
+        logging.debug('number of copies: %d' % (len(fqons)))
         if self.copies >= 0 and len(fqons) > self.copies:
             for fqon in fqons[:len(fqons)-self.copies]:
                 object_prefix, logical_date, physical_date = fqon.rsplit('.', 2)
@@ -198,13 +203,13 @@ class S3Archive:
                     #delete object
                     logging.info("deleting stale object:" + fqon)
                     r = self.conn.delete(self.bucket_name, fqon)
-                    check_http_response(r)
+                    util.check_http_response(r)
                     
                 elif self.days > 0 and age > self.days:
                     #delete object
                     logging.info("deleting stale object:" + fqon)
                     r = self.conn.delete(self.bucket_name, fqon)
-                    check_http_response(r)
+                    util.check_http_response(r)
                 
     
     def __del__(self):

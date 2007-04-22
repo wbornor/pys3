@@ -1,8 +1,7 @@
 import os
 import unittest
 import StringIO
-from util import *
-from S3IO import *
+from pys3 import *
 
 #In a file called amazon_credentials.py you must supply 
 #values for two variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY

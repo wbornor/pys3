@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import exceptions
 from lib import S3
+from S3Errors import *
 
 __all__ = [
        "check_http_response",

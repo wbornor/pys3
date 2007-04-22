@@ -2,12 +2,10 @@ import os
 import unittest
 import StringIO
 import time
-from datetime import *
+from datetime import datetime, timedelta
 import logging
-import util
-from lib import S3
-from S3IO import *
-from S3Archive import *
+from pys3 import *
+from pys3.lib import S3
 logging.root.setLevel(logging.DEBUG)
 
 #In a file called amazon_credentials.py you must supply 
@@ -16,6 +14,18 @@ from amazon_credentials import *
 
 TEST_BUCKET_NAME = AWS_ACCESS_KEY_ID + '_test_bucket'
 
+class TestBadS3Archive(unittest.TestCase):
+    def setUp(self):
+        self.conn = S3.AWSAuthConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        
+    def testBadObjectPrefix(self):
+        """ object_prefix name cannot contain periods """
+        self.assertRaises(S3ArchiveError, S3Archive, self.conn, TEST_BUCKET_NAME, 'test.object')
+
+    def tearDown(self):
+        try: util.force_delete_bucket(self.conn, TEST_BUCKET_NAME)
+        except S3ResponseError: pass 
+        
 class TestGoodNewIO(unittest.TestCase):
     def setUp(self):
         self.conn = S3.AWSAuthConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
@@ -71,8 +81,6 @@ class TestGoodExistingIO(unittest.TestCase):
             io.write('testNoParams_%d' % i)
             io.close()
             time.sleep(1)
-            
-        
         
         rkiv = S3Archive(self.conn, TEST_BUCKET_NAME, 'testNoParams')
         io = rkiv.existing_io()
@@ -224,7 +232,7 @@ class TestGoodList(unittest.TestCase):
         io.close()
         
         rkiv = S3Archive(self.conn, TEST_BUCKET_NAME, 'test_obj')
-        self.assertEqual(len(rkiv.list()), 0)
+        self.assertEqual(rkiv.list(), [])
         
         io = rkiv.new_io()
         io.write('only in the archive')
@@ -233,7 +241,7 @@ class TestGoodList(unittest.TestCase):
         self.assertEqual(len(rkiv.list()), 1)
         
         io = S3IO(self.conn, TEST_BUCKET_NAME, 'test_object')
-        self.assertEqual(io.read, 'dont touch me')
+        self.assertEqual(io.read(), 'dont touch me')
         
             
     def tearDown(self):

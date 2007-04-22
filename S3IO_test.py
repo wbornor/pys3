@@ -1,7 +1,7 @@
 import os
 import unittest
-from util import *
-from S3IO import *
+from pys3 import *
+from pys3.lib import S3
 import logging
 logging.root.setLevel(logging.DEBUG)
 
