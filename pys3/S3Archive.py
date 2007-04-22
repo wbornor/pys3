@@ -18,6 +18,8 @@ __all__ = [
 class S3ArchiveError(S3Error): pass
 
 class S3ArchiveIO(S3IO):
+    """ an version of a logical object """ 
+    
     def __init__(self, rkiv, meta={}, buf='', fqon=None, logical_date=None):
         self.rkiv = rkiv
         self.object_prefix = rkiv.object_prefix
@@ -49,7 +51,7 @@ class S3ArchiveIO(S3IO):
 s3archiveio = S3ArchiveIO
         
 class S3Archive:
-    """ a S3Archive is a set of physical Amazon objects that represent historical instances of the same logical object """   
+    """ manage historical versions of an object, automatically handles retention """   
         
     def __init__(self, conn, bucket_name, object_prefix):
 

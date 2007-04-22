@@ -12,6 +12,7 @@ __all__ = [
 class S3IOError(S3Error): pass
 
 class S3IO(StringIO):
+    """ read and write to an S3 object as if it were a StringIO object """
     
     def __init__(self, conn, bucket_name, object_name, meta={}, buf=''):
         StringIO.__init__(self, buf)
